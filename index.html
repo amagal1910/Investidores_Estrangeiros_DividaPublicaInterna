@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Participação de Investidores Estrangeiros — Dívida Pública</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=DM+Mono:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0a0e1a;
+    --surface: #111827;
+    --surface2: #1a2236;
+    --border: #1e2d47;
+    --accent: #00d4ff;
+    --accent2: #ff6b35;
+    --gold: #f5c842;
+    --text: #e8eef8;
+    --muted: #6b7fa3;
+    --green: #00e5a0;
+
+    --brasil: #22d3ee;
+    --mexico: #f97316;
+    --chile: #a78bfa;
+    --colombia: #34d399;
+    --africa: #fbbf24;
+    --china: #f87171;
+    --indonesia: #60a5fa;
+    --japao: #e879f9;
+    --coreia: #fb923c;
+    --malasia: #4ade80;
+    --filipinas: #38bdf8;
+    --tailandia: #facc15;
+    --vietna: #f472b6;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Syne', sans-serif;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Background grid */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background-image:
+      linear-gradient(rgba(0,212,255,0.03) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(0,212,255,0.03) 1px, transparent 1px);
+    background-size: 40px 40px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .container { position: relative; z-index: 1; max-width: 1400px; margin: 0 auto; padding: 0 24px; }
+
+  /* Header */
+  header {
+    padding: 32px 0 20px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 32px;
+  }
+  .header-inner { display: flex; align-items: flex-end; justify-content: space-between; flex-wrap: wrap; gap: 16px; }
+  .header-badge {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.2em;
+    color: var(--accent);
+    text-transform: uppercase;
+    background: rgba(0,212,255,0.08);
+    border: 1px solid rgba(0,212,255,0.25);
+    padding: 4px 10px;
+    border-radius: 2px;
+    margin-bottom: 12px;
+    display: inline-block;
+  }
+  h1 {
+    font-size: clamp(22px, 3vw, 36px);
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.02em;
+  }
+  h1 span { color: var(--accent); }
+  .header-meta {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--muted);
+    text-align: right;
+  }
+
+  /* KPI Cards */
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 12px;
+    margin-bottom: 32px;
+  }
+  .kpi-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 18px 20px;
+    position: relative;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .kpi-card:hover { border-color: var(--accent); }
+  .kpi-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 2px;
+    background: var(--c, var(--accent));
+  }
+  .kpi-label { font-size: 10px; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted); margin-bottom: 8px; font-family: 'DM Mono', monospace; }
+  .kpi-value { font-size: 26px; font-weight: 800; letter-spacing: -0.03em; color: var(--c, var(--text)); }
+  .kpi-sub { font-size: 11px; color: var(--muted); margin-top: 4px; font-family: 'DM Mono', monospace; }
+
+  /* Section layout */
+  .section { margin-bottom: 28px; }
+  .section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 16px;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .section-title {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title::before {
+    content: '';
+    display: block;
+    width: 18px;
+    height: 2px;
+    background: var(--accent);
+  }
+
+  /* Controls */
+  .controls { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+  .toggle-group { display: flex; background: var(--surface2); border: 1px solid var(--border); border-radius: 6px; overflow: hidden; }
+  .toggle-btn {
+    padding: 6px 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    background: transparent;
+    color: var(--muted);
+    border: none;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+  .toggle-btn.active { background: var(--accent); color: #000; font-weight: 700; }
+
+  .country-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    border: 1px solid var(--border);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 0.05em;
+  }
+  .chip.active {
+    border-color: var(--c);
+    color: var(--c);
+    background: color-mix(in srgb, var(--c) 12%, transparent);
+  }
+
+  /* Date range */
+  .date-range { display: flex; align-items: center; gap: 8px; }
+  .date-range label { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; }
+  .date-range input {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    padding: 5px 10px;
+    border-radius: 4px;
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    outline: none;
+    transition: border-color 0.2s;
+  }
+  .date-range input:focus { border-color: var(--accent); }
+
+  /* Chart containers */
+  .chart-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 24px;
+    position: relative;
+  }
+  .chart-wrapper { position: relative; height: 340px; }
+
+  /* Two-col grid */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+  @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+
+  /* Bar chart horizontal */
+  .bar-chart-wrapper { position: relative; height: 420px; }
+
+  /* Legend */
+  .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 14px; }
+  .legend-item { display: flex; align-items: center; gap: 6px; font-family: 'DM Mono', monospace; font-size: 11px; color: var(--muted); cursor: pointer; transition: color 0.2s; }
+  .legend-item:hover { color: var(--text); }
+  .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+  /* Scrollable x for small screens */
+  .scroll-x { overflow-x: auto; }
+
+  /* Footer */
+  footer { padding: 24px 0; border-top: 1px solid var(--border); margin-top: 20px; }
+  .footer-text { font-family: 'DM Mono', monospace; font-size: 10px; color: var(--muted); letter-spacing: 0.08em; }
+
+  /* Tooltip overrides - Chart.js */
+  canvas { display: block; }
+
+  /* Glowing accent lines */
+  .glow-line {
+    position: absolute;
+    bottom: 0; left: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, var(--accent), transparent);
+    width: 100%;
+    opacity: 0.4;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+
+  <!-- HEADER -->
+  <header>
+    <div class="header-inner">
+      <div>
+        <div class="header-badge">Dívida Pública Federal · Mercados Emergentes</div>
+        <h1>Participação de <span>Investidores Estrangeiros</span><br>na Dívida Pública</h1>
+      </div>
+      <div class="header-meta">
+        Fonte: STN/RMD · Banxico · Hacienda · National Treasuries<br>
+        Dados até <span id="lastDate">—</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- KPI ROW -->
+  <div class="kpi-row" id="kpiRow"></div>
+
+  <!-- CHART 1: Série Temporal PEERS (América Latina + África do Sul) -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">Série Histórica — Peers Emergentes (% da Dívida Local)</div>
+      <div class="controls">
+        <div class="date-range">
+          <label>De</label>
+          <input type="month" id="startDate" value="2010-01">
+          <label>Até</label>
+          <input type="month" id="endDate" value="2025-08">
+        </div>
+        <div class="toggle-group">
+          <button class="toggle-btn active" onclick="setLineStyle('line',this)">Linha</button>
+          <button class="toggle-btn" onclick="setLineStyle('area',this)">Área</button>
+        </div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="country-chips" id="peersChips" style="margin-bottom:16px;"></div>
+      <div class="chart-wrapper">
+        <canvas id="peersChart"></canvas>
+      </div>
+      <div class="glow-line"></div>
+    </div>
+  </div>
+
+  <!-- CHART 2: Série Temporal ASIA -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">Série Histórica — Países Asiáticos (% da Dívida Local)</div>
+      <div class="controls">
+        <div class="date-range">
+          <label>De</label>
+          <input type="month" id="startDateAsia" value="2010-01">
+          <label>Até</label>
+          <input type="month" id="endDateAsia" value="2025-06">
+        </div>
+      </div>
+    </div>
+    <div class="chart-card">
+      <div class="country-chips" id="asiaChips" style="margin-bottom:16px;"></div>
+      <div class="chart-wrapper">
+        <canvas id="asiaChart"></canvas>
+      </div>
+      <div class="glow-line"></div>
+    </div>
+  </div>
+
+  <!-- CHART 3: Snapshot Comparativo -->
+  <div class="section">
+    <div class="section-header">
+      <div class="section-title">Snapshot Comparativo — Jun/2025</div>
+    </div>
+    <div class="two-col">
+      <div class="chart-card">
+        <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:12px;">PARTICIPAÇÃO ESTRANGEIRA (USD bi) — RANKING</div>
+        <div class="bar-chart-wrapper">
+          <canvas id="snapshotUsdChart"></canvas>
+        </div>
+        <div class="glow-line"></div>
+      </div>
+      <div class="chart-card">
+        <div style="font-size:11px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:12px;">PARTICIPAÇÃO ESTRANGEIRA (% da Dívida Local) — RANKING</div>
+        <div class="bar-chart-wrapper">
+          <canvas id="snapshotPctChart"></canvas>
+        </div>
+        <div class="glow-line"></div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    <div class="footer-text">
+      FONTES: STN/RMD (Brasil) · Banxico (México) · Hacienda Chile · Hacienda Colombia · National Treasury RSA · Dados Ásia: Bloomberg/Fontes Oficiais · Câmbio: Bloomberg
+    </div>
+  </footer>
+
+</div>
+
+<script>
+// ============================================================
+// DATA
+// ============================================================
+const PEERS_RAW = [{"Data":"2007-01-31","Brasil":0.015517,"México":0.08362,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2007-02-28","Brasil":0.016743,"México":0.081305,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2007-03-31","Brasil":0.018365,"México":0.080204,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2007-04-30","Brasil":0.019515,"México":0.07448,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2007-05-31","Brasil":0.020725,"México":0.0859,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2007-06-30","Brasil":0.02747,"México":0.083222,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2007-07-31","Brasil":0.044741,"México":0.084224,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2007-08-31","Brasil":0.047074,"México":0.087498,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2007-09-30","Brasil":0.049403,"México":0.092567,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2007-10-31","Brasil":0.051778,"México":0.093095,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2007-11-30","Brasil":0.050048,"México":0.10302,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2007-12-31","Brasil":0.051185,"México":0.107868,"Chile":null,"Colômbia":null,"África do Sul":0.1042},{"Data":"2008-01-31","Brasil":0.052677,"México":0.123669,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2008-02-29","Brasil":0.054651,"México":0.129526,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2008-03-31","Brasil":0.059221,"México":0.12924,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2008-04-30","Brasil":0.062442,"México":0.126787,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2008-05-31","Brasil":0.063524,"México":0.132897,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2008-06-30","Brasil":0.063939,"México":0.136447,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2008-07-31","Brasil":0.060641,"México":0.130327,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2008-08-31","Brasil":0.059286,"México":0.128695,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2008-09-30","Brasil":0.053162,"México":0.122476,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2008-10-31","Brasil":0.035702,"México":0.111285,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2008-11-30","Brasil":0.032285,"México":0.109785,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2008-12-31","Brasil":0.031083,"México":0.108073,"Chile":null,"Colômbia":null,"África do Sul":0.0832},{"Data":"2009-01-31","Brasil":0.032115,"México":0.097621,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2009-02-28","Brasil":0.032613,"México":0.104459,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2009-03-31","Brasil":0.034447,"México":0.095965,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2009-04-30","Brasil":0.038234,"México":0.094278,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2009-05-31","Brasil":0.040878,"México":0.10199,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2009-06-30","Brasil":0.040963,"México":0.115002,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2009-07-31","Brasil":0.042498,"México":0.120975,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2009-08-31","Brasil":0.044264,"México":0.124395,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2009-09-30","Brasil":0.046498,"México":0.129882,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2009-10-31","Brasil":0.047578,"México":0.142765,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2009-11-30","Brasil":0.050087,"México":0.144834,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2009-12-31","Brasil":0.054097,"México":0.152095,"Chile":null,"Colômbia":null,"África do Sul":0.1475},{"Data":"2010-01-31","Brasil":0.058004,"México":0.16121,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2010-02-28","Brasil":0.059597,"México":0.165694,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2010-03-31","Brasil":0.063137,"México":0.172059,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2010-04-30","Brasil":0.068009,"México":0.175695,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2010-05-31","Brasil":0.066019,"México":0.170997,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2010-06-30","Brasil":0.066875,"México":0.176248,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2010-07-31","Brasil":0.072406,"México":0.188929,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2010-08-31","Brasil":0.078026,"México":0.195756,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2010-09-30","Brasil":0.088008,"México":0.215264,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2010-10-31","Brasil":0.09469,"México":0.226023,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2010-11-30","Brasil":0.097459,"México":0.220601,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2010-12-31","Brasil":0.097234,"México":0.228576,"Chile":null,"Colômbia":null,"África do Sul":0.2102},{"Data":"2011-01-31","Brasil":0.099938,"México":0.231979,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2011-02-28","Brasil":0.102649,"México":0.240052,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2011-03-31","Brasil":0.11428,"México":0.253065,"Chile":null,"Colômbia":null,"África do Sul":0.238},{"Data":"2011-04-30","Brasil":0.117928,"México":0.258143,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2011-05-31","Brasil":0.122225,"México":0.26494,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2011-06-30","Brasil":0.124376,"México":0.266765,"Chile":null,"Colômbia":null,"África do Sul":0.2493},{"Data":"2011-07-31","Brasil":0.122754,"México":0.270773,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2011-08-31","Brasil":0.116849,"México":0.265626,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2011-09-30","Brasil":0.110286,"México":0.254939,"Chile":null,"Colômbia":null,"África do Sul":0.2471},{"Data":"2011-10-31","Brasil":0.108717,"México":0.258804,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2011-11-30","Brasil":0.113252,"México":0.25813,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2011-12-31","Brasil":0.115083,"México":0.255019,"Chile":null,"Colômbia":null,"África do Sul":0.239},{"Data":"2012-01-31","Brasil":0.118478,"México":0.264296,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2012-02-29","Brasil":0.124626,"México":0.278699,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2012-03-31","Brasil":0.133268,"México":0.293178,"Chile":null,"Colômbia":null,"África do Sul":0.2704},{"Data":"2012-04-30","Brasil":0.139019,"México":0.297219,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2012-05-31","Brasil":0.128027,"México":0.297578,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2012-06-30","Brasil":0.122478,"México":0.308006,"Chile":null,"Colômbia":null,"África do Sul":0.2835},{"Data":"2012-07-31","Brasil":0.126046,"México":0.318226,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2012-08-31","Brasil":0.133367,"México":0.32714,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2012-09-30","Brasil":0.143023,"México":0.337793,"Chile":null,"Colômbia":null,"África do Sul":0.3285},{"Data":"2012-10-31","Brasil":0.144764,"México":0.337131,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2012-11-30","Brasil":0.151393,"México":0.340497,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2012-12-31","Brasil":0.155289,"México":0.349053,"Chile":null,"Colômbia":null,"África do Sul":0.3456},{"Data":"2013-01-31","Brasil":0.163695,"México":0.355403,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2013-02-28","Brasil":0.160867,"México":0.362126,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2013-03-31","Brasil":0.162753,"México":0.360424,"Chile":null,"Colômbia":null,"África do Sul":0.3567},{"Data":"2013-04-30","Brasil":0.165283,"México":0.371428,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2013-05-31","Brasil":0.160406,"México":0.351906,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2013-06-30","Brasil":0.137703,"México":0.328609,"Chile":null,"Colômbia":null,"África do Sul":0.3275},{"Data":"2013-07-31","Brasil":0.129174,"México":0.332849,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2013-08-31","Brasil":0.127019,"México":0.330494,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2013-09-30","Brasil":0.122498,"México":0.336765,"Chile":null,"Colômbia":null,"África do Sul":0.3207},{"Data":"2013-10-31","Brasil":0.131068,"México":0.340866,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2013-11-30","Brasil":0.128267,"México":0.342987,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2013-12-31","Brasil":0.117897,"México":0.338424,"Chile":null,"Colômbia":null,"África do Sul":0.3308},{"Data":"2014-01-31","Brasil":0.117059,"México":0.344773,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2014-02-28","Brasil":0.125238,"México":0.356484,"Chile":null,"Colômbia":null,"África do Sul":null},{"Data":"2014-03-31","Brasil":0.12703,"México":0.356097,"Chile":0.049025,"Colômbia":null,"África do Sul":0.3297},{"Data":"2014-04-30","Brasil":0.128972,"México":0.352799,"Chile":0.052455,"Colômbia":null,"África do Sul":null},{"Data":"2014-05-31","Brasil":0.131516,"México":0.361254,"Chile":0.057093,"Colômbia":null,"África do Sul":null},{"Data":"2014-06-30","Brasil":0.135133,"México":0.358049,"Chile":0.056993,"Colômbia":null,"África do Sul":0.3499},{"Data":"2014-07-31","Brasil":0.133975,"México":0.362898,"Chile":0.059157,"Colômbia":null,"África do Sul":null},{"Data":"2014-08-31","Brasil":0.132025,"México":0.358069,"Chile":0.058394,"Colômbia":null,"África do Sul":null},{"Data":"2014-09-30","Brasil":0.127034,"México":0.346906,"Chile":0.055046,"Colômbia":null,"África do Sul":0.3484},{"Data":"2014-10-31","Brasil":0.127068,"México":0.348178,"Chile":0.05396,"Colômbia":null,"África do Sul":null},{"Data":"2014-11-30","Brasil":0.12404,"México":0.341836,"Chile":0.051997,"Colômbia":null,"África do Sul":null},{"Data":"2014-12-31","Brasil":0.118254,"México":0.342378,"Chile":0.04854,"Colômbia":null,"África do Sul":0.3401},{"Data":"2015-01-31","Brasil":0.121244,"México":0.348946,"Chile":0.05118,"Colômbia":null,"África do Sul":null},{"Data":"2015-02-28","Brasil":0.121955,"México":0.343716,"Chile":0.055094,"Colômbia":null,"África do Sul":null},{"Data":"2015-03-31","Brasil":0.118376,"México":0.349023,"Chile":0.057456,"Colômbia":null,"África do Sul":0.3457},{"Data":"2015-04-30","Brasil":0.12102,"México":0.349994,"Chile":0.060527,"Colômbia":null,"África do Sul":null},{"Data":"2015-05-31","Brasil":0.117565,"México":0.352136,"Chile":0.063476,"Colômbia":null,"África do Sul":null},{"Data":"2015-06-30","Brasil":0.118016,"México":0.351044,"Chile":0.061538,"Colômbia":null,"África do Sul":0.3498},{"Data":"2015-07-31","Brasil":0.118023,"México":0.354539,"Chile":0.058782,"Colômbia":null,"África do Sul":null},{"Data":"2015-08-31","Brasil":0.115143,"México":0.347855,"Chile":0.052432,"Colômbia":null,"África do Sul":null},{"Data":"2015-09-30","Brasil":0.111499,"México":0.340282,"Chile":0.046875,"Colômbia":null,"África do Sul":0.3357},{"Data":"2015-10-31","Brasil":0.110082,"México":0.336726,"Chile":0.04803,"Colômbia":null,"África do Sul":null},{"Data":"2015-11-30","Brasil":0.109265,"México":0.337003,"Chile":0.046834,"Colômbia":null,"África do Sul":null},{"Data":"2015-12-31","Brasil":0.109072,"México":0.335706,"Chile":0.047026,"Colômbia":null,"África do Sul":0.3375},{"Data":"2016-01-31","Brasil":0.111476,"México":0.340296,"Chile":0.047892,"Colômbia":null,"África do Sul":null},{"Data":"2016-02-29","Brasil":0.114394,"México":0.338099,"Chile":0.047624,"Colômbia":null,"África do Sul":null},{"Data":"2016-03-31","Brasil":0.122044,"México":0.355565,"Chile":0.049745,"Colômbia":null,"África do Sul":0.3404},{"Data":"2016-04-30","Brasil":0.125534,"México":0.352085,"Chile":0.051553,"Colômbia":null,"África do Sul":null},{"Data":"2016-05-31","Brasil":0.127826,"México":0.356437,"Chile":0.052476,"Colômbia":null,"África do Sul":null},{"Data":"2016-06-30","Brasil":0.128618,"México":0.346007,"Chile":0.050773,"Colômbia":null,"África do Sul":0.3303},{"Data":"2016-07-31","Brasil":0.130394,"México":0.336631,"Chile":0.04836,"Colômbia":null,"África do Sul":null},{"Data":"2016-08-31","Brasil":0.133085,"México":0.336001,"Chile":0.050109,"Colômbia":null,"África do Sul":null},{"Data":"2016-09-30","Brasil":0.133784,"México":0.320497,"Chile":0.053378,"Colômbia":null,"África do Sul":0.328},{"Data":"2016-10-31","Brasil":0.136068,"México":0.323327,"Chile":0.056072,"Colômbia":null,"África do Sul":null},{"Data":"2016-11-30","Brasil":0.124776,"México":0.308261,"Chile":0.052905,"Colômbia":null,"África do Sul":null},{"Data":"2016-12-31","Brasil":0.120908,"México":0.303378,"Chile":0.051786,"Colômbia":null,"África do Sul":0.3087},{"Data":"2017-01-31","Brasil":0.122456,"México":0.29919,"Chile":0.055084,"Colômbia":null,"África do Sul":null},{"Data":"2017-02-28","Brasil":0.128091,"México":0.293741,"Chile":0.055956,"Colômbia":null,"África do Sul":null},{"Data":"2017-03-31","Brasil":0.128091,"México":0.291975,"Chile":0.062133,"Colômbia":null,"África do Sul":0.3029},{"Data":"2017-04-30","Brasil":0.127661,"México":0.297083,"Chile":0.063754,"Colômbia":null,"África do Sul":null},{"Data":"2017-05-31","Brasil":0.124773,"México":0.295804,"Chile":0.06387,"Colômbia":null,"África do Sul":null},{"Data":"2017-06-30","Brasil":0.127154,"México":0.308476,"Chile":0.068539,"Colômbia":null,"África do Sul":0.3157},{"Data":"2017-07-31","Brasil":0.127616,"México":0.306764,"Chile":0.069439,"Colômbia":null,"África do Sul":null},{"Data":"2017-08-31","Brasil":0.133076,"México":0.305895,"Chile":0.07154,"Colômbia":null,"África do Sul":null},{"Data":"2017-09-30","Brasil":0.135501,"México":0.309399,"Chile":0.072621,"Colômbia":null,"África do Sul":0.3167},{"Data":"2017-10-31","Brasil":0.139613,"México":0.299561,"Chile":0.073574,"Colômbia":null,"África do Sul":null},{"Data":"2017-11-30","Brasil":0.136226,"México":0.301785,"Chile":0.071889,"Colômbia":null,"África do Sul":null},{"Data":"2017-12-31","Brasil":0.129893,"México":0.292791,"Chile":0.074505,"Colômbia":null,"África do Sul":0.3149},{"Data":"2018-01-31","Brasil":0.129879,"México":0.302741,"Chile":0.076168,"Colômbia":null,"África do Sul":null},{"Data":"2018-02-28","Brasil":0.130965,"México":0.305408,"Chile":0.076764,"Colômbia":null,"África do Sul":null},{"Data":"2018-03-31","Brasil":0.130695,"México":0.296734,"Chile":0.072979,"Colômbia":null,"África do Sul":0.3064},{"Data":"2018-04-30","Brasil":0.126047,"México":0.282695,"Chile":0.068975,"Colômbia":null,"África do Sul":null},{"Data":"2018-05-31","Brasil":0.118199,"México":0.271048,"Chile":0.065264,"Colômbia":null,"África do Sul":null},{"Data":"2018-06-30","Brasil":0.113093,"México":0.269988,"Chile":0.063695,"Colômbia":null,"África do Sul":0.2826},{"Data":"2018-07-31","Brasil":0.109997,"México":0.269127,"Chile":0.06479,"Colômbia":null,"África do Sul":null},{"Data":"2018-08-31","Brasil":0.109021,"México":0.270375,"Chile":0.063979,"Colômbia":null,"África do Sul":null},{"Data":"2018-09-30","Brasil":0.111065,"México":0.265621,"Chile":0.061742,"Colômbia":null,"África do Sul":0.267},{"Data":"2018-10-31","Brasil":0.109853,"México":0.260397,"Chile":0.060282,"Colômbia":null,"África do Sul":null},{"Data":"2018-11-30","Brasil":0.107849,"México":0.266695,"Chile":0.060455,"Colômbia":null,"África do Sul":null},{"Data":"2018-12-31","Brasil":0.108929,"México":0.263505,"Chile":0.059218,"Colômbia":null,"África do Sul":0.2723},{"Data":"2019-01-31","Brasil":0.113039,"México":0.265939,"Chile":0.063197,"Colômbia":null,"África do Sul":null},{"Data":"2019-02-28","Brasil":0.116027,"México":0.268779,"Chile":0.06529,"Colômbia":null,"África do Sul":null},{"Data":"2019-03-31","Brasil":0.118286,"México":0.271029,"Chile":0.066088,"Colômbia":null,"África do Sul":0.2745},{"Data":"2019-04-30","Brasil":0.12005,"México":0.266374,"Chile":0.065985,"Colômbia":null,"África do Sul":null},{"Data":"2019-05-31","Brasil":0.114817,"México":0.259706,"Chile":0.063099,"Colômbia":null,"África do Sul":null},{"Data":"2019-06-30","Brasil":0.119369,"México":0.267637,"Chile":0.07221,"Colômbia":null,"África do Sul":0.2799},{"Data":"2019-07-31","Brasil":0.120699,"México":0.26373,"Chile":0.077039,"Colômbia":null,"África do Sul":null},{"Data":"2019-08-31","Brasil":0.116688,"México":0.257882,"Chile":0.073499,"Colômbia":null,"África do Sul":null},{"Data":"2019-09-30","Brasil":0.117218,"México":0.261893,"Chile":0.075295,"Colômbia":null,"África do Sul":0.3012},{"Data":"2019-10-31","Brasil":0.11804,"México":0.257625,"Chile":0.07018,"Colômbia":null,"África do Sul":null},{"Data":"2019-11-30","Brasil":0.116375,"México":0.261625,"Chile":0.064568,"Colômbia":null,"África do Sul":null},{"Data":"2019-12-31","Brasil":0.113984,"México":0.269015,"Chile":0.066481,"Colômbia":null,"África do Sul":0.2859},{"Data":"2020-01-31","Brasil":0.11347,"México":0.268613,"Chile":0.066856,"Colômbia":null,"África do Sul":null},{"Data":"2020-02-29","Brasil":0.10827,"México":0.256657,"Chile":0.064682,"Colômbia":null,"África do Sul":null},{"Data":"2020-03-31","Brasil":0.09559,"México":0.235576,"Chile":0.059006,"Colômbia":null,"África do Sul":0.2412},{"Data":"2020-04-30","Brasil":0.09431,"México":0.22673,"Chile":0.060358,"Colômbia":null,"África do Sul":null},{"Data":"2020-05-31","Brasil":0.09419,"México":0.229523,"Chile":0.064527,"Colômbia":null,"África do Sul":null},{"Data":"2020-06-30","Brasil":0.097455,"México":0.235745,"Chile":0.066082,"Colômbia":null,"África do Sul":0.2531},{"Data":"2020-07-31","Brasil":0.095984,"México":0.231491,"Chile":0.066547,"Colômbia":null,"África do Sul":null},{"Data":"2020-08-31","Brasil":0.097174,"México":0.221218,"Chile":0.067987,"Colômbia":null,"África do Sul":null},{"Data":"2020-09-30","Brasil":0.093997,"México":0.217657,"Chile":0.067592,"Colômbia":null,"África do Sul":0.2589},{"Data":"2020-10-31","Brasil":0.092938,"México":0.211626,"Chile":0.073002,"Colômbia":null,"África do Sul":null},{"Data":"2020-11-30","Brasil":0.09477,"México":0.210396,"Chile":0.079516,"Colômbia":null,"África do Sul":null},{"Data":"2020-12-31","Brasil":0.092978,"México":0.213006,"Chile":0.080254,"Colômbia":null,"África do Sul":0.2639},{"Data":"2021-01-31","Brasil":0.089929,"México":0.209047,"Chile":0.080376,"Colômbia":null,"África do Sul":null},{"Data":"2021-02-28","Brasil":0.087793,"México":0.205658,"Chile":0.082376,"Colômbia":null,"África do Sul":null},{"Data":"2021-03-31","Brasil":0.086378,"México":0.196766,"Chile":0.084261,"Colômbia":null,"África do Sul":0.2601},{"Data":"2021-04-30","Brasil":0.088083,"México":0.197066,"Chile":0.085985,"Colômbia":null,"África do Sul":null},{"Data":"2021-05-31","Brasil":0.090226,"México":0.201018,"Chile":0.087406,"Colômbia":null,"África do Sul":null},{"Data":"2021-06-30","Brasil":0.091196,"México":0.197516,"Chile":0.090494,"Colômbia":null,"África do Sul":0.2661},{"Data":"2021-07-31","Brasil":0.087844,"México":0.192977,"Chile":0.091791,"Colômbia":null,"África do Sul":null},{"Data":"2021-08-31","Brasil":0.088765,"México":0.19393,"Chile":0.09388,"Colômbia":null,"África do Sul":null},{"Data":"2021-09-30","Brasil":0.086617,"México":0.189893,"Chile":0.093764,"Colômbia":null,"África do Sul":0.2569},{"Data":"2021-10-31","Brasil":0.084099,"México":0.183567,"Chile":0.093252,"Colômbia":null,"África do Sul":null},{"Data":"2021-11-30","Brasil":0.081937,"México":0.175527,"Chile":0.085694,"Colômbia":null,"África do Sul":null},{"Data":"2021-12-31","Brasil":0.08329,"México":0.171629,"Chile":0.083897,"Colômbia":null,"África do Sul":0.2449},{"Data":"2022-01-31","Brasil":0.088218,"México":0.172673,"Chile":0.08417,"Colômbia":null,"África do Sul":null},{"Data":"2022-02-28","Brasil":0.091716,"México":0.177285,"Chile":0.085249,"Colômbia":null,"África do Sul":null},{"Data":"2022-03-31","Brasil":0.095505,"México":0.179148,"Chile":0.083764,"Colômbia":null,"África do Sul":0.2337},{"Data":"2022-04-30","Brasil":0.098285,"México":0.179098,"Chile":0.081218,"Colômbia":null,"África do Sul":null},{"Data":"2022-05-31","Brasil":0.095843,"México":0.178698,"Chile":0.080099,"Colômbia":null,"África do Sul":null},{"Data":"2022-06-30","Brasil":0.094006,"México":0.179898,"Chile":0.080424,"Colômbia":null,"África do Sul":0.2254},{"Data":"2022-07-31","Brasil":0.095073,"México":0.178972,"Chile":0.079888,"Colômbia":null,"África do Sul":null},{"Data":"2022-08-31","Brasil":0.093285,"México":0.179249,"Chile":0.080066,"Colômbia":null,"África do Sul":null},{"Data":"2022-09-30","Brasil":0.0918,"México":0.179706,"Chile":0.079069,"Colômbia":null,"África do Sul":0.217},{"Data":"2022-10-31","Brasil":0.090348,"México":0.172254,"Chile":0.078268,"Colômbia":null,"África do Sul":null},{"Data":"2022-11-30","Brasil":0.090506,"México":0.167461,"Chile":0.082451,"Colômbia":null,"África do Sul":null},{"Data":"2022-12-31","Brasil":0.089617,"México":0.170042,"Chile":0.081671,"Colômbia":null,"África do Sul":0.2179},{"Data":"2023-01-31","Brasil":0.097289,"México":0.168408,"Chile":0.083963,"Colômbia":null,"África do Sul":null},{"Data":"2023-02-28","Brasil":0.093774,"México":0.162899,"Chile":0.084006,"Colômbia":null,"África do Sul":null},{"Data":"2023-03-31","Brasil":0.091861,"México":0.160609,"Chile":0.086282,"Colômbia":0.165818,"África do Sul":0.2288},{"Data":"2023-04-30","Brasil":0.091218,"México":0.163408,"Chile":0.088219,"Colômbia":0.168073,"África do Sul":null},{"Data":"2023-05-31","Brasil":0.092567,"México":0.167082,"Chile":0.086914,"Colômbia":0.170614,"África do Sul":null},{"Data":"2023-06-30","Brasil":0.093718,"México":0.162517,"Chile":0.088419,"Colômbia":0.176538,"África do Sul":0.2286},{"Data":"2023-07-31","Brasil":0.099258,"México":0.160289,"Chile":0.089555,"Colômbia":0.180024,"África do Sul":null},{"Data":"2023-08-31","Brasil":0.097174,"México":0.158505,"Chile":0.088289,"Colômbia":0.179861,"África do Sul":null},{"Data":"2023-09-30","Brasil":0.09454,"México":0.154929,"Chile":0.089286,"Colômbia":0.220009,"África do Sul":0.2307},{"Data":"2023-10-31","Brasil":0.098256,"México":0.155376,"Chile":0.088254,"Colômbia":0.216484,"África do Sul":null},{"Data":"2023-11-30","Brasil":0.094888,"México":0.153718,"Chile":0.089527,"Colômbia":0.214734,"África do Sul":null},{"Data":"2023-12-31","Brasil":0.098613,"México":0.155088,"Chile":0.090029,"Colômbia":0.210891,"África do Sul":0.2519},{"Data":"2024-01-31","Brasil":0.099228,"México":0.153437,"Chile":null,"Colômbia":0.208129,"África do Sul":0.252463},{"Data":"2024-02-29","Brasil":0.097961,"México":0.144938,"Chile":null,"Colômbia":0.20667,"África do Sul":0.24878},{"Data":"2024-03-31","Brasil":0.101544,"México":0.147744,"Chile":0.090815,"Colômbia":0.209303,"África do Sul":0.246307},{"Data":"2024-04-30","Brasil":0.098006,"México":0.145581,"Chile":null,"Colômbia":0.207555,"África do Sul":0.245713},{"Data":"2024-05-31","Brasil":0.09765,"México":0.143709,"Chile":null,"Colômbia":0.206151,"África do Sul":0.252654},{"Data":"2024-06-30","Brasil":0.10034,"México":0.142832,"Chile":0.083909,"Colômbia":0.200818,"África do Sul":0.248182},{"Data":"2024-07-31","Brasil":0.098241,"México":0.136619,"Chile":null,"Colômbia":0.197247,"África do Sul":0.250049},{"Data":"2024-08-31","Brasil":0.101422,"México":0.136599,"Chile":null,"Colômbia":0.197784,"África do Sul":0.246186},{"Data":"2024-09-30","Brasil":0.104677,"México":0.140577,"Chile":0.088463,"Colômbia":0.189701,"África do Sul":0.250371},{"Data":"2024-10-31","Brasil":0.107486,"México":0.133863,"Chile":null,"Colômbia":0.187672,"África do Sul":0.249993},{"Data":"2024-11-30","Brasil":0.112471,"México":0.131678,"Chile":null,"Colômbia":0.180644,"África do Sul":0.241632},{"Data":"2024-12-31","Brasil":0.102041,"México":0.136679,"Chile":0.079778,"Colômbia":0.176709,"África do Sul":0.246048},{"Data":"2025-01-31","Brasil":0.099433,"México":0.133605,"Chile":null,"Colômbia":0.176044,"África do Sul":0.247013},{"Data":"2025-02-28","Brasil":0.096537,"México":0.135013,"Chile":null,"Colômbia":0.176337,"África do Sul":0.248829},{"Data":"2025-03-31","Brasil":0.096169,"México":0.136646,"Chile":0.086324,"Colômbia":0.173372,"África do Sul":0.249679},{"Data":"2025-04-30","Brasil":0.097225,"México":0.133755,"Chile":null,"Colômbia":0.169101,"África do Sul":0.248155},{"Data":"2025-05-31","Brasil":0.098777,"México":0.129625,"Chile":null,"Colômbia":0.170388,"África do Sul":0.244766},{"Data":"2025-06-30","Brasil":0.09839,"México":0.126666,"Chile":0.092212,"Colômbia":0.170777,"África do Sul":0.250745},{"Data":"2025-07-31","Brasil":0.098593,"México":0.12401,"Chile":null,"Colômbia":0.157693,"África do Sul":0.24659},{"Data":"2025-08-31","Brasil":0.09834,"México":0.121993,"Chile":null,"Colômbia":0.160468,"África do Sul":0.251982}];
+
+const ASIA_RAW = [{"Data":"2007-03-31","China":null,"Indonésia":0.145,"Japão":0.0597,"Coréia do Sul":0.0169,"Malásia":0,"Filipinas":null,"Tailândia":0.0129,"Vietnã":null},{"Data":"2007-06-30","China":null,"Indonésia":0.1798,"Japão":0.0562,"Coréia do Sul":0.0221,"Malásia":0,"Filipinas":null,"Tailândia":0.007,"Vietnã":null},{"Data":"2007-09-30","China":null,"Indonésia":0.1685,"Japão":0.0665,"Coréia do Sul":0.0508,"Malásia":0,"Filipinas":null,"Tailândia":0.003,"Vietnã":null},{"Data":"2007-12-31","China":null,"Indonésia":0.1636,"Japão":0.0775,"Coréia do Sul":0.0781,"Malásia":0,"Filipinas":null,"Tailândia":0.0086,"Vietnã":null},{"Data":"2008-03-31","China":null,"Indonésia":0.162,"Japão":0.0747,"Coréia do Sul":0.0822,"Malásia":0.1962,"Filipinas":null,"Tailândia":0.0176,"Vietnã":null},{"Data":"2008-06-30","China":null,"Indonésia":0.165,"Japão":0.0735,"Coréia do Sul":0.1183,"Malásia":0.1744,"Filipinas":null,"Tailândia":0.0231,"Vietnã":null},{"Data":"2008-09-30","China":null,"Indonésia":0.1538,"Japão":0.0699,"Coréia do Sul":0.128,"Malásia":0.1608,"Filipinas":null,"Tailândia":0.0296,"Vietnã":null},{"Data":"2008-12-31","China":null,"Indonésia":0.1592,"Japão":0.0665,"Coréia do Sul":0.1244,"Malásia":0.1527,"Filipinas":null,"Tailândia":0.0337,"Vietnã":null},{"Data":"2009-03-31","China":null,"Indonésia":0.1611,"Japão":0.0696,"Coréia do Sul":0.0993,"Malásia":0.1523,"Filipinas":null,"Tailândia":0.0358,"Vietnã":null},{"Data":"2009-06-30","China":null,"Indonésia":0.1868,"Japão":0.0698,"Coréia do Sul":0.0948,"Malásia":0.1734,"Filipinas":null,"Tailândia":0.0396,"Vietnã":null},{"Data":"2009-09-30","China":null,"Indonésia":0.2051,"Japão":0.0679,"Coréia do Sul":0.101,"Malásia":0.199,"Filipinas":null,"Tailândia":0.0469,"Vietnã":null},{"Data":"2009-12-31","China":null,"Indonésia":0.2089,"Japão":0.0678,"Coréia do Sul":0.0968,"Malásia":0.2128,"Filipinas":null,"Tailândia":0.0498,"Vietnã":null},{"Data":"2010-03-31","China":null,"Indonésia":0.2178,"Japão":0.0672,"Coréia do Sul":0.0902,"Malásia":0.2293,"Filipinas":null,"Tailândia":0.0619,"Vietnã":null},{"Data":"2010-06-30","China":null,"Indonésia":0.2349,"Japão":0.0634,"Coréia do Sul":0.0897,"Malásia":0.2525,"Filipinas":null,"Tailândia":0.0697,"Vietnã":null},{"Data":"2010-09-30","China":null,"Indonésia":0.2668,"Japão":0.0671,"Coréia do Sul":0.0955,"Malásia":0.2696,"Filipinas":null,"Tailândia":0.0839,"Vietnã":null},{"Data":"2010-12-31","China":null,"Indonésia":0.2906,"Japão":0.0666,"Coréia do Sul":0.1101,"Malásia":0.2785,"Filipinas":null,"Tailândia":0.0862,"Vietnã":null},{"Data":"2011-03-31","China":null,"Indonésia":0.3117,"Japão":0.0763,"Coréia do Sul":0.1171,"Malásia":0.2911,"Filipinas":null,"Tailândia":0.1049,"Vietnã":null},{"Data":"2011-06-30","China":null,"Indonésia":0.3277,"Japão":0.0766,"Coréia do Sul":0.1226,"Malásia":0.293,"Filipinas":null,"Tailândia":0.1185,"Vietnã":null},{"Data":"2011-09-30","China":null,"Indonésia":0.3243,"Japão":0.0764,"Coréia do Sul":0.0924,"Malásia":0.279,"Filipinas":null,"Tailândia":0.0868,"Vietnã":null},{"Data":"2011-12-31","China":null,"Indonésia":0.3173,"Japão":0.0774,"Coréia do Sul":0.0819,"Malásia":0.2757,"Filipinas":null,"Tailândia":0.082,"Vietnã":null},{"Data":"2012-03-31","China":null,"Indonésia":0.3201,"Japão":0.0799,"Coréia do Sul":0.0972,"Malásia":0.2977,"Filipinas":null,"Tailândia":0.0958,"Vietnã":null},{"Data":"2012-06-30","China":null,"Indonésia":0.3106,"Japão":0.0802,"Coréia do Sul":0.0939,"Malásia":0.3104,"Filipinas":null,"Tailândia":0.0942,"Vietnã":null},{"Data":"2012-09-30","China":null,"Indonésia":0.3203,"Japão":0.0817,"Coréia do Sul":0.0984,"Malásia":0.3278,"Filipinas":0.2505,"Tailândia":0.1033,"Vietnã":null},{"Data":"2012-12-31","China":null,"Indonésia":0.3329,"Japão":0.0813,"Coréia do Sul":0.1118,"Malásia":0.3454,"Filipinas":0.2577,"Tailândia":0.1076,"Vietnã":null},{"Data":"2013-03-31","China":null,"Indonésia":0.3262,"Japão":0.0851,"Coréia do Sul":0.1182,"Malásia":0.3468,"Filipinas":0.2582,"Tailândia":0.1051,"Vietnã":null},{"Data":"2013-06-30","China":null,"Indonésia":0.3066,"Japão":0.0874,"Coréia do Sul":0.1073,"Malásia":0.3205,"Filipinas":0.2412,"Tailândia":0.0844,"Vietnã":null},{"Data":"2013-09-30","China":null,"Indonésia":0.3128,"Japão":0.0907,"Coréia do Sul":0.1169,"Malásia":0.3128,"Filipinas":0.2417,"Tailândia":0.0832,"Vietnã":null},{"Data":"2013-12-31","China":null,"Indonésia":0.3194,"Japão":0.0884,"Coréia do Sul":0.1167,"Malásia":0.3109,"Filipinas":0.2386,"Tailândia":0.0826,"Vietnã":null},{"Data":"2014-03-31","China":null,"Indonésia":0.3186,"Japão":0.0904,"Coréia do Sul":0.1219,"Malásia":0.3151,"Filipinas":0.2437,"Tailândia":0.0774,"Vietnã":null},{"Data":"2014-06-30","China":null,"Indonésia":0.3343,"Japão":0.0877,"Coréia do Sul":0.1273,"Malásia":0.3213,"Filipinas":0.2465,"Tailândia":0.073,"Vietnã":null},{"Data":"2014-09-30","China":null,"Indonésia":0.3352,"Japão":0.0884,"Coréia do Sul":0.1248,"Malásia":0.3076,"Filipinas":0.2388,"Tailândia":0.0669,"Vietnã":null},{"Data":"2014-12-31","China":null,"Indonésia":0.3673,"Japão":0.0936,"Coréia do Sul":0.1447,"Malásia":0.2974,"Filipinas":0.2384,"Tailândia":0.0682,"Vietnã":null},{"Data":"2015-03-31","China":null,"Indonésia":0.3702,"Japão":0.1006,"Coréia do Sul":0.1476,"Malásia":0.2882,"Filipinas":0.2359,"Tailândia":0.0638,"Vietnã":null},{"Data":"2015-06-30","China":null,"Indonésia":0.393,"Japão":0.1016,"Coréia do Sul":0.148,"Malásia":0.2745,"Filipinas":0.2302,"Tailândia":0.0609,"Vietnã":null},{"Data":"2015-09-30","China":null,"Indonésia":0.3863,"Japão":0.1024,"Coréia do Sul":0.1381,"Malásia":0.2454,"Filipinas":0.2239,"Tailândia":0.0602,"Vietnã":null},{"Data":"2015-12-31","China":null,"Indonésia":0.3791,"Japão":0.1088,"Coréia do Sul":0.1428,"Malásia":0.2407,"Filipinas":0.2218,"Tailândia":0.0597,"Vietnã":null},{"Data":"2016-03-31","China":null,"Indonésia":0.3911,"Japão":0.1108,"Coréia do Sul":0.1456,"Malásia":0.2338,"Filipinas":0.2215,"Tailândia":0.0615,"Vietnã":null},{"Data":"2016-06-30","China":null,"Indonésia":0.3945,"Japão":0.1107,"Coréia do Sul":0.1449,"Malásia":0.2437,"Filipinas":0.2205,"Tailândia":0.0594,"Vietnã":null},{"Data":"2016-09-30","China":null,"Indonésia":0.3939,"Japão":0.1135,"Coréia do Sul":0.1559,"Malásia":0.2333,"Filipinas":0.1942,"Tailândia":0.0615,"Vietnã":null},{"Data":"2016-12-31","China":null,"Indonésia":0.3862,"Japão":0.1162,"Coréia do Sul":0.1455,"Malásia":0.2294,"Filipinas":0.1838,"Tailândia":0.0618,"Vietnã":null},{"Data":"2017-03-31","China":null,"Indonésia":0.3921,"Japão":0.1162,"Coréia do Sul":0.1595,"Malásia":0.2503,"Filipinas":0.1793,"Tailândia":0.0706,"Vietnã":null},{"Data":"2017-06-30","China":null,"Indonésia":0.4079,"Japão":0.115,"Coréia do Sul":0.1698,"Malásia":0.2595,"Filipinas":0.1727,"Tailândia":0.0708,"Vietnã":null},{"Data":"2017-09-30","China":null,"Indonésia":0.4135,"Japão":0.1146,"Coréia do Sul":0.1749,"Malásia":0.2564,"Filipinas":0.1691,"Tailândia":0.069,"Vietnã":null},{"Data":"2017-12-31","China":null,"Indonésia":0.4056,"Japão":0.1166,"Coréia do Sul":0.1714,"Malásia":0.2521,"Filipinas":0.1633,"Tailândia":0.0663,"Vietnã":null},{"Data":"2018-03-31","China":null,"Indonésia":0.4044,"Japão":0.1207,"Coréia do Sul":0.179,"Malásia":0.2561,"Filipinas":0.163,"Tailândia":0.0651,"Vietnã":null},{"Data":"2018-06-30","China":null,"Indonésia":0.3827,"Japão":0.1245,"Coréia do Sul":0.1755,"Malásia":0.2375,"Filipinas":0.156,"Tailândia":0.0607,"Vietnã":null},{"Data":"2018-09-30","China":null,"Indonésia":0.3753,"Japão":0.1288,"Coréia do Sul":0.177,"Malásia":0.2375,"Filipinas":0.151,"Tailândia":0.0566,"Vietnã":null},{"Data":"2018-12-31","China":null,"Indonésia":0.3776,"Japão":0.1283,"Coréia do Sul":0.1643,"Malásia":0.2369,"Filipinas":0.1495,"Tailândia":0.058,"Vietnã":null},{"Data":"2019-03-31","China":null,"Indonésia":0.3855,"Japão":0.1286,"Coréia do Sul":0.1649,"Malásia":0.2481,"Filipinas":0.1396,"Tailândia":0.0607,"Vietnã":null},{"Data":"2019-06-30","China":null,"Indonésia":0.3862,"Japão":0.1244,"Coréia do Sul":0.1668,"Malásia":0.2544,"Filipinas":0.1375,"Tailândia":0.0546,"Vietnã":null},{"Data":"2019-09-30","China":null,"Indonésia":0.3897,"Japão":0.1254,"Coréia do Sul":0.1773,"Malásia":0.2555,"Filipinas":0.1355,"Tailândia":0.0559,"Vietnã":null},{"Data":"2019-12-31","China":null,"Indonésia":0.3944,"Japão":0.1284,"Coréia do Sul":0.177,"Malásia":0.2593,"Filipinas":0.1347,"Tailândia":0.0552,"Vietnã":null},{"Data":"2020-03-31","China":null,"Indonésia":0.3541,"Japão":0.1303,"Coréia do Sul":0.1452,"Malásia":0.2315,"Filipinas":0.1229,"Tailândia":0.0459,"Vietnã":null},{"Data":"2020-06-30","China":null,"Indonésia":0.329,"Japão":0.1318,"Coréia do Sul":0.1419,"Malásia":0.2339,"Filipinas":0.1202,"Tailândia":0.0449,"Vietnã":null},{"Data":"2020-09-30","China":null,"Indonésia":0.3191,"Japão":0.1294,"Coréia do Sul":0.1388,"Malásia":0.2285,"Filipinas":0.1205,"Tailândia":0.0397,"Vietnã":null},{"Data":"2020-12-31","China":null,"Indonésia":0.3139,"Japão":0.1269,"Coréia do Sul":0.1322,"Malásia":0.2249,"Filipinas":0.12,"Tailândia":0.034,"Vietnã":null},{"Data":"2021-03-31","China":null,"Indonésia":0.303,"Japão":0.1252,"Coréia do Sul":0.1424,"Malásia":0.2269,"Filipinas":0.1063,"Tailândia":0.0358,"Vietnã":null},{"Data":"2021-06-30","China":null,"Indonésia":0.3019,"Japão":0.1214,"Coréia do Sul":0.1564,"Malásia":0.2278,"Filipinas":0.1043,"Tailândia":0.0368,"Vietnã":null},{"Data":"2021-09-30","China":null,"Indonésia":0.2979,"Japão":0.1202,"Coréia do Sul":0.1702,"Malásia":0.2316,"Filipinas":0.1026,"Tailândia":0.0367,"Vietnã":null},{"Data":"2021-12-31","China":null,"Indonésia":0.2908,"Japão":0.1183,"Coréia do Sul":0.1845,"Malásia":0.2389,"Filipinas":0.0985,"Tailândia":0.0365,"Vietnã":null},{"Data":"2022-03-31","China":null,"Indonésia":0.2793,"Japão":0.1249,"Coréia do Sul":0.1892,"Malásia":0.2461,"Filipinas":0.0977,"Tailândia":0.0388,"Vietnã":null},{"Data":"2022-06-30","China":null,"Indonésia":0.2558,"Japão":0.1273,"Coréia do Sul":0.1857,"Malásia":0.2322,"Filipinas":0.0919,"Tailândia":0.0381,"Vietnã":null},{"Data":"2022-09-30","China":null,"Indonésia":0.2397,"Japão":0.129,"Coréia do Sul":0.1736,"Malásia":0.227,"Filipinas":0.0818,"Tailândia":0.0342,"Vietnã":null},{"Data":"2022-12-31","China":0.0247,"Indonésia":0.2393,"Japão":0.1308,"Coréia do Sul":0.1653,"Malásia":0.2153,"Filipinas":0.0775,"Tailândia":0.036,"Vietnã":null},{"Data":"2023-03-31","China":0.0283,"Indonésia":0.246,"Japão":0.1293,"Coréia do Sul":0.1717,"Malásia":0.2181,"Filipinas":0.0693,"Tailândia":0.0369,"Vietnã":null},{"Data":"2023-06-30","China":0.0317,"Indonésia":0.2426,"Japão":0.1287,"Coréia do Sul":0.1789,"Malásia":0.2202,"Filipinas":0.0598,"Tailândia":0.0431,"Vietnã":null},{"Data":"2023-09-30","China":0.0333,"Indonésia":0.2296,"Japão":0.1218,"Coréia do Sul":0.1845,"Malásia":0.2182,"Filipinas":0.0533,"Tailândia":0.0434,"Vietnã":null},{"Data":"2023-12-31","China":0.0352,"Indonésia":0.2365,"Japão":0.1213,"Coréia do Sul":0.1897,"Malásia":0.2193,"Filipinas":0.0525,"Tailândia":0.0461,"Vietnã":null},{"Data":"2024-03-31","China":0.0363,"Indonésia":0.2365,"Japão":0.1273,"Coréia do Sul":0.1964,"Malásia":0.2248,"Filipinas":0.0483,"Tailândia":0.0487,"Vietnã":null},{"Data":"2024-06-30","China":0.0373,"Indonésia":0.2339,"Japão":0.127,"Coréia do Sul":0.2046,"Malásia":0.225,"Filipinas":0.0469,"Tailândia":0.0499,"Vietnã":null},{"Data":"2024-09-30","China":0.0388,"Indonésia":0.2283,"Japão":0.1258,"Coréia do Sul":0.2069,"Malásia":0.2263,"Filipinas":0.0461,"Tailândia":0.0502,"Vietnã":null},{"Data":"2024-12-31","China":0.0404,"Indonésia":0.2274,"Japão":0.1237,"Coréia do Sul":0.2072,"Malásia":0.2275,"Filipinas":0.0434,"Tailândia":0.0487,"Vietnã":null},{"Data":"2025-03-31","China":0.0478,"Indonésia":0.2294,"Japão":0.1162,"Coréia do Sul":0.2055,"Malásia":0.2253,"Filipinas":0.0452,"Tailândia":0.0483,"Vietnã":null},{"Data":"2025-06-30","China":0.0565,"Indonésia":0.1456,"Japão":null,"Coréia do Sul":0.2089,"Malásia":0.2173,"Filipinas":0.0492,"Tailândia":0.0936,"Vietnã":0.0012}];
+
+const SNAP_COUNTRIES = ['China','Coréia do Sul','Brasil','México','África do Sul','Malásia','Indonésia','Tailândia','Colômbia','Filipinas','Japão','Chile','Vietnã'];
+const SNAP_USD = [293.31,192.05,137.30,95.76,72.95,66.13,56.85,27.02,26.90,10.44,9.23,8.97,0.11];
+const SNAP_PCT = [0.05652,0.208922,0.09839,0.127033,0.24659,0.217275,0.145608,0.093613,0.170777,0.049167,0.116178,0.092212,0.0012];
+
+// ============================================================
+// CONFIG
+// ============================================================
+const PEERS_COUNTRIES = ['Brasil','México','Chile','Colômbia','África do Sul'];
+const ASIA_COUNTRIES = ['China','Indonésia','Japão','Coréia do Sul','Malásia','Filipinas','Tailândia','Vietnã'];
+
+const COLORS = {
+  'Brasil': '#22d3ee',
+  'México': '#f97316',
+  'Chile': '#a78bfa',
+  'Colômbia': '#34d399',
+  'África do Sul': '#fbbf24',
+  'China': '#f87171',
+  'Indonésia': '#60a5fa',
+  'Japão': '#e879f9',
+  'Coréia do Sul': '#fb923c',
+  'Malásia': '#4ade80',
+  'Filipinas': '#38bdf8',
+  'Tailândia': '#facc15',
+  'Vietnã': '#f472b6',
+};
+
+const SNAP_COLORS = SNAP_COUNTRIES.map(c => COLORS[c] || '#888');
+
+// State
+let peersActive = new Set(PEERS_COUNTRIES);
+let asiaActive = new Set(ASIA_COUNTRIES);
+let lineStyle = 'line';
+let peersChart, asiaChart, snapUsdChart, snapPctChart;
+
+// ============================================================
+// CHART.JS GLOBAL DEFAULTS
+// ============================================================
+Chart.defaults.color = '#6b7fa3';
+Chart.defaults.font.family = "'DM Mono', monospace";
+Chart.defaults.font.size = 10;
+
+const gridColor = 'rgba(30,45,71,0.8)';
+const tooltipDefaults = {
+  backgroundColor: '#0a0e1a',
+  borderColor: '#1e2d47',
+  borderWidth: 1,
+  titleColor: '#e8eef8',
+  bodyColor: '#6b7fa3',
+  padding: 10,
+  cornerRadius: 4,
+  titleFont: { family: "'Syne', sans-serif", weight: '700', size: 12 },
+  bodyFont: { family: "'DM Mono', monospace", size: 11 },
+};
+
+// ============================================================
+// HELPERS
+// ============================================================
+function filterByDateRange(data, start, end) {
+  return data.filter(d => {
+    const dt = d.Data;
+    return (!start || dt >= start) && (!end || dt <= end);
+  });
+}
+
+function buildPeersDatasets(data) {
+  return PEERS_COUNTRIES
+    .filter(c => peersActive.has(c))
+    .map(c => ({
+      label: c,
+      data: data.map(d => d[c] != null ? +(d[c]*100).toFixed(2) : null),
+      borderColor: COLORS[c],
+      backgroundColor: lineStyle === 'area' ? COLORS[c]+'22' : 'transparent',
+      fill: lineStyle === 'area',
+      tension: 0.3,
+      pointRadius: 0,
+      pointHoverRadius: 5,
+      borderWidth: 2,
+      spanGaps: true,
+    }));
+}
+
+function buildAsiaDatasets(data) {
+  return ASIA_COUNTRIES
+    .filter(c => asiaActive.has(c))
+    .map(c => ({
+      label: c,
+      data: data.map(d => d[c] != null ? +(d[c]*100).toFixed(2) : null),
+      borderColor: COLORS[c],
+      backgroundColor: 'transparent',
+      fill: false,
+      tension: 0.3,
+      pointRadius: 2,
+      pointHoverRadius: 5,
+      borderWidth: 2,
+      spanGaps: false,
+    }));
+}
+
+function getDateRange(inputId) {
+  const val = document.getElementById(inputId).value;
+  return val ? val + '-01' : null;
+}
+
+// ============================================================
+// KPI
+// ============================================================
+function buildKPIs() {
+  const lastPeers = PEERS_RAW[PEERS_RAW.length - 1];
+  const lastAsia = ASIA_RAW.filter(d => d['Indonésia'] != null).slice(-1)[0];
+
+  const kpis = [
+    { label: 'Brasil (ago/25)', value: (lastPeers.Brasil*100).toFixed(1)+'%', sub: 'dívida interna', c: 'var(--brasil)' },
+    { label: 'México (ago/25)', value: (lastPeers['México']*100).toFixed(1)+'%', sub: 'dívida interna', c: 'var(--mexico)' },
+    { label: 'África do Sul (ago/25)', value: (lastPeers['África do Sul']*100).toFixed(1)+'%', sub: 'dívida interna', c: 'var(--africa)' },
+    { label: 'Colômbia (ago/25)', value: (lastPeers['Colômbia']*100).toFixed(1)+'%', sub: 'dívida interna', c: 'var(--colombia)' },
+    { label: 'Malásia (jun/25)', value: (lastAsia['Malásia']*100).toFixed(1)+'%', sub: 'dívida interna', c: 'var(--malasia)' },
+    { label: 'Brasil (USD bi)', value: 'USD 137', sub: 'participação estrang.', c: 'var(--accent)' },
+  ];
+
+  document.getElementById('kpiRow').innerHTML = kpis.map(k => `
+    <div class="kpi-card" style="--c:${k.c}">
+      <div class="kpi-label">${k.label}</div>
+      <div class="kpi-value">${k.value}</div>
+      <div class="kpi-sub">${k.sub}</div>
+    </div>
+  `).join('');
+
+  document.getElementById('lastDate').textContent = 'ago/2025 (peers) · jun/2025 (Ásia)';
+}
+
+// ============================================================
+// CHIPS
+// ============================================================
+function buildChips(containerId, countries, activeSet, onToggle) {
+  const el = document.getElementById(containerId);
+  el.innerHTML = countries.map(c => `
+    <button class="chip ${activeSet.has(c) ? 'active' : ''}" 
+      style="--c:${COLORS[c]}" 
+      onclick="${onToggle}('${c}', this)">
+      ${c}
+    </button>
+  `).join('');
+}
+
+window.togglePeers = function(country, btn) {
+  if (peersActive.has(country)) {
+    if (peersActive.size === 1) return;
+    peersActive.delete(country);
+    btn.classList.remove('active');
+  } else {
+    peersActive.add(country);
+    btn.classList.add('active');
+  }
+  updatePeersChart();
+};
+
+window.toggleAsia = function(country, btn) {
+  if (asiaActive.has(country)) {
+    if (asiaActive.size === 1) return;
+    asiaActive.delete(country);
+    btn.classList.remove('active');
+  } else {
+    asiaActive.add(country);
+    btn.classList.add('active');
+  }
+  updateAsiaChart();
+};
+
+// ============================================================
+// PEERS CHART
+// ============================================================
+function getPeersData() {
+  const start = getDateRange('startDate');
+  const end = getDateRange('endDate');
+  return filterByDateRange(PEERS_RAW, start, end);
+}
+
+function initPeersChart() {
+  const data = getPeersData();
+  const ctx = document.getElementById('peersChart').getContext('2d');
+  peersChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: data.map(d => d.Data),
+      datasets: buildPeersDatasets(data),
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 400 },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          ...tooltipDefaults,
+          callbacks: {
+            label: ctx => `  ${ctx.dataset.label}: ${ctx.parsed.y != null ? ctx.parsed.y.toFixed(1)+'%' : '—'}`,
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: gridColor },
+          ticks: {
+            maxTicksLimit: 12,
+            callback(v, i) {
+              const d = this.getLabelForValue(v);
+              return d ? d.slice(0,7) : '';
+            }
+          }
+        },
+        y: {
+          grid: { color: gridColor },
+          ticks: { callback: v => v+'%' },
+          title: { display: true, text: '% da Dívida Interna', color: '#6b7fa3' }
+        }
+      }
+    }
+  });
+}
+
+function updatePeersChart() {
+  const data = getPeersData();
+  peersChart.data.labels = data.map(d => d.Data);
+  peersChart.data.datasets = buildPeersDatasets(data);
+  peersChart.update();
+}
+
+// ============================================================
+// ASIA CHART
+// ============================================================
+function getAsiaData() {
+  const start = getDateRange('startDateAsia');
+  const end = getDateRange('endDateAsia');
+  return filterByDateRange(ASIA_RAW, start, end);
+}
+
+function initAsiaChart() {
+  const data = getAsiaData();
+  const ctx = document.getElementById('asiaChart').getContext('2d');
+  asiaChart = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: data.map(d => d.Data),
+      datasets: buildAsiaDatasets(data),
+    },
+    options: {
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 400 },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          ...tooltipDefaults,
+          callbacks: {
+            label: ctx => `  ${ctx.dataset.label}: ${ctx.parsed.y != null ? ctx.parsed.y.toFixed(1)+'%' : '—'}`,
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: gridColor },
+          ticks: {
+            maxTicksLimit: 10,
+            callback(v, i) {
+              const d = this.getLabelForValue(v);
+              return d ? d.slice(0,7) : '';
+            }
+          }
+        },
+        y: {
+          grid: { color: gridColor },
+          ticks: { callback: v => v+'%' },
+          title: { display: true, text: '% da Dívida Interna', color: '#6b7fa3' }
+        }
+      }
+    }
+  });
+}
+
+function updateAsiaChart() {
+  const data = getAsiaData();
+  asiaChart.data.labels = data.map(d => d.Data);
+  asiaChart.data.datasets = buildAsiaDatasets(data);
+  asiaChart.update();
+}
+
+// ============================================================
+// SNAPSHOT CHARTS
+// ============================================================
+function initSnapshotCharts() {
+  // USD bar — horizontal
+  const ctxUsd = document.getElementById('snapshotUsdChart').getContext('2d');
+  const sortedIdxUsd = [...Array(SNAP_COUNTRIES.length).keys()].sort((a,b)=>SNAP_USD[b]-SNAP_USD[a]);
+  snapUsdChart = new Chart(ctxUsd, {
+    type: 'bar',
+    data: {
+      labels: sortedIdxUsd.map(i => SNAP_COUNTRIES[i]),
+      datasets: [{
+        data: sortedIdxUsd.map(i => SNAP_USD[i]),
+        backgroundColor: sortedIdxUsd.map(i => COLORS[SNAP_COUNTRIES[i]] + 'cc'),
+        borderColor: sortedIdxUsd.map(i => COLORS[SNAP_COUNTRIES[i]]),
+        borderWidth: 1,
+        borderRadius: 3,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          ...tooltipDefaults,
+          callbacks: {
+            label: ctx => `  USD ${ctx.parsed.x.toFixed(1)} bi`,
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: gridColor },
+          ticks: { callback: v => 'USD '+v }
+        },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+
+  // PCT bar — horizontal
+  const ctxPct = document.getElementById('snapshotPctChart').getContext('2d');
+  const sortedIdxPct = [...Array(SNAP_COUNTRIES.length).keys()].sort((a,b)=>SNAP_PCT[b]-SNAP_PCT[a]);
+  snapPctChart = new Chart(ctxPct, {
+    type: 'bar',
+    data: {
+      labels: sortedIdxPct.map(i => SNAP_COUNTRIES[i]),
+      datasets: [{
+        data: sortedIdxPct.map(i => +(SNAP_PCT[i]*100).toFixed(1)),
+        backgroundColor: sortedIdxPct.map(i => COLORS[SNAP_COUNTRIES[i]] + 'cc'),
+        borderColor: sortedIdxPct.map(i => COLORS[SNAP_COUNTRIES[i]]),
+        borderWidth: 1,
+        borderRadius: 3,
+      }]
+    },
+    options: {
+      indexAxis: 'y',
+      responsive: true,
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          ...tooltipDefaults,
+          callbacks: {
+            label: ctx => `  ${ctx.parsed.x.toFixed(1)}% da dívida local`,
+          }
+        }
+      },
+      scales: {
+        x: {
+          grid: { color: gridColor },
+          ticks: { callback: v => v+'%' }
+        },
+        y: { grid: { display: false } }
+      }
+    }
+  });
+}
+
+// ============================================================
+// LINE STYLE TOGGLE
+// ============================================================
+window.setLineStyle = function(style, btn) {
+  lineStyle = style;
+  document.querySelectorAll('#peersChart').forEach(() => {});
+  btn.closest('.toggle-group').querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  updatePeersChart();
+};
+
+// ============================================================
+// DATE LISTENERS
+// ============================================================
+['startDate','endDate'].forEach(id => {
+  document.getElementById(id).addEventListener('change', updatePeersChart);
+});
+['startDateAsia','endDateAsia'].forEach(id => {
+  document.getElementById(id).addEventListener('change', updateAsiaChart);
+});
+
+// ============================================================
+// INIT
+// ============================================================
+buildKPIs();
+buildChips('peersChips', PEERS_COUNTRIES, peersActive, 'togglePeers');
+buildChips('asiaChips', ASIA_COUNTRIES, asiaActive, 'toggleAsia');
+initPeersChart();
+initAsiaChart();
+initSnapshotCharts();
+</script>
+</body>
+</html>
